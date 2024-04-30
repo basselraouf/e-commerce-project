@@ -16,7 +16,10 @@ class product extends Model
         'price',
         'rating',
     ];
-    
+    public function carts()
+    {
+        return $this->belongsToMany(Cart::class)->withPivot('quantity');
+    }
 
 
 }

@@ -36,6 +36,13 @@ class User extends Authenticatable implements JWTSubject
         'remember_token',
     ];
 
+
+    public function cart()
+    {
+        return $this->hasOne(Cart::class);
+    }
+
+
     /**
      * The attributes that should be cast.
      *

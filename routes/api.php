@@ -33,12 +33,13 @@ Route::prefix('auth')->group(function () {
 
 
 
-Route::group([],function(){
-    route::get('/products/{page}',productController::class.'@getAllProductsByPageID');
-    route::get('/product/{id}',productController::Class.'@getSpecificProduct');
+Route::group(['prefix' => 'products'], function (){
     route::get('/all-categories',productController::class.'@getAllCategorires');
-    route::get('/products/all-categories/{category_id}',productController::class.'@getProductsByCategoryID');
-    
+    route::get('/all-categories/{category_id}',productController::class.'@getProductsByCategoryID');
+    route::get('/{page}',productController::class.'@getAllProductsByPageID');
+    route::get('/product/{id}',productController::Class.'@getSpecificProduct');
+    route::get('/add-to-cart/{productId}',productController::class.'@addToCart');
+    route::get('/remove-from-cart/{productId}',productController::class.'@removeFromCart');
 });
 
 
