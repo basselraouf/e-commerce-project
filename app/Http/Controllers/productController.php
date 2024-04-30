@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\cart;
+use App\Models\order;
+use App\Models\order_item;
 use Illuminate\Http\Request;
 use App\Models\product;
 use App\Models\category;
@@ -87,6 +89,44 @@ class productController extends Controller
         } else {
         return response()->json(['message' => 'Product not found in cart'], 404);
         }
+    }
+
+
+    public function checkout(Request $request){
+        $user=Auth::user();
+        $cart=auth()->user()->cart;
+        if ($cart->products->isEmpty()) {
+            return response()->json(['error' => 'Cart is empty'], 400);
+        }
+        
+        $totalAmount=0;
+        foreach($cart->products as $product){
+            $totalAmount+=($product->price * $product->pivot->quantity);
+        }
+
+
+        $order=new order([
+            'user_id'=> $user->id ,
+            'total_amount'=> $totalAmount,
+            'status'=> 'pending',
+            'payment_method'=>$request->input('payment_method'),
+            'payment_status'=>'unpaid',
+            'shipping_address'=>$request->input('shipping_address'),
+        ]);
+        $order->save();
+
+        foreach ($cart->products as $product) {
+            $orderItem = new order_item([
+                'order_id' => $order->id,
+                'product_id' => $product->id,
+                'quantity' => $product->pivot->quantity,
+                'price' => $product->price,
+            ]);
+            $orderItem->save();
+        }
+
+        $cart->products()->detach();
+        return response()->json(['message' => 'Order placed successfully', 'order_id' => $order->id]);
     }
 
 } 
