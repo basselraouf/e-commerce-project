@@ -2,15 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\traits\GeneralTraits;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use Hash;
-use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
-
 
 class AuthController extends Controller
 {
+    use GeneralTraits;
     public function __construct(){
         $this->middleware('AuthGuard',['except'=>['login','register']]);
     }
@@ -25,61 +25,38 @@ class AuthController extends Controller
         $token = Auth::attempt($credentials);
         
         if (!$token) {
-            return response()->json([
-                'message' => 'Unauthorized',
-            ], 401);
+           return $this->returnError(errNum:'E001' , msg:'Unauthorized');
         }
         $user = Auth::user();
-        return response()->json([
-            'user' => $user,
-            'authorization' => [
-                'token' => $token,
-                'type' => 'bearer',
-            ]
-        ]);
+        $user->token=$token;
+        return $this->returnData(key:"user data", value:$user, msg:"This is user data");
     }
     
-
-
-
     public function logout(Request $request){
-        try{
-            Auth::logout();
-        return response()->json(['message'=>'successfully logged out']);
-        }catch(\Exception $e){
-            return response()->json(['message'=>'There is something wrong']);
-        }
+        Auth::logout();
+        return $this->returnSucessMessage( msg:'successfully logged out');
     }
 
     public function register(Request $request){
-        $request->validate([
+        try{
+            $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:5',
+            ]);
+            $user=User::create([
+                'name'=>$request->name,
+                'email'=>$request->email,
+                'password'=>Hash::make($request->password),
         ]);
-        $user=User::create([
-            'name'=>$request->name,
-            'email'=>$request->email,
-            'password'=>Hash::make($request->password),
+            return $this->returnData(key:'user data', value:$user, msg:'User Created Successfully!');
+        }catch(\Exception $e){
+            return $this->returnError(errNum:'E005' , msg:'There is something wrong');
+        }
+    }
 
-        ]);
-        return response()->json([
-            'message'=>'User Created Successfully!',
-            'user'=>$user,
-            
-        ]);
-     }
-
-
-     public function refresh()
-     {
-         return response()->json([
-             'user' => Auth::user(),
-             'authorisation' => [
-                 'token' => Auth::refresh(),
-                 'type' => 'bearer',
-             ]
-         ]);
+     public function refresh(){     
+        return $this->returnData(key:'refresh token', value:Auth::refresh(), msg:'New token generated');
      }
  }      
 
